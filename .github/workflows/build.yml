@@ -1,0 +1,33 @@
+name: Build QuestNPC JAR
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'QuestNPC-Minecraft-Mod-Source.zip'
+      - '.github/workflows/build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Gradle
+        run: |
+          curl -L https://services.gradle.org/distributions/gradle-8.8-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          echo "/tmp/gradle-8.8/bin" >> "$GITHUB_PATH"
+      - name: Extract mod source
+        run: |
+          unzip -q QuestNPC-Minecraft-Mod-Source.zip -d /tmp/questnpc-source
+          cd /tmp/questnpc-source/QuestNPC
+          gradle build --no-daemon
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: questnpc-mod-jar
+          path: /tmp/questnpc-source/QuestNPC/build/libs/*.jar
+          if-no-files-found: error
